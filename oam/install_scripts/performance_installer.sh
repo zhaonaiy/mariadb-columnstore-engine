@@ -60,7 +60,7 @@ if { $PKGTYPE == "rpm" } {
 	}
 }
 
-# check and see if remote server has ssh -v keys setup, set PASSWORD if so
+# check and see if remote server has ssh keys setup, set PASSWORD if so
 send_user " "
 send "ssh -v $USERNAME@$SERVER 'time'\n"
 set timeout 20
@@ -73,7 +73,7 @@ expect {
 							"passphrase" { send "$PASSWORD\n" }
 						}
 	}
-	"sys" { set PASSWORD "ssh -v" }
+	"sys" { set PASSWORD "ssh" }
 	"word: " { send "$PASSWORD\n" }
 	"passphrase" { send "$PASSWORD\n" }
 	"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
@@ -92,8 +92,8 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "uninstall" } {
 	# erase package
 	#
 	send_user "Erase MariaDB Columnstore Packages on Module                 "
-	send "ssh -v $USERNAME@$SERVER '$PKGERASE ;$PKGERASE1 dummy'\n"
-	if { $PASSWORD != "ssh -v" } {
+	send "ssh -v $USERNAME@$SERVER '$PKGERASE '\n"
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -102,9 +102,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "uninstall" } {
 	}
 	set timeout 120
 	expect {
-        "error: --purge needs at least one package" { send_user "DONE" }
-		"dummy is not installed" { send_user "DONE" }
-        "dummy which isn't installed" { send_user "DONE" }
+        	"error: --purge needs at least one package" { send_user "DONE" }
 		"error: Failed dependencies" { send_user "ERROR: Failed dependencies\n" ; exit 1 }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Connection refused"   { send_user "ERROR: Connection refused\n" ; exit 1 }
@@ -123,7 +121,7 @@ if { $INSTALLTYPE == "uninstall" } { exit 0 }
 set timeout 30
 send_user "Copy New MariaDB Columnstore Package to Module              "
 send "ssh -v $USERNAME@$SERVER 'rm -f /root/mariadb-columnstore-*.$PKGTYPE'\n"
-if { $PASSWORD != "ssh -v" } {
+if { $PASSWORD != "ssh" } {
 	set timeout 30
 	expect {
 		"word: " { send "$PASSWORD\n" }
@@ -138,8 +136,8 @@ expect {
         "Exit status 0" { send_user "DONE" }
 }
 
-send "scp -v $HOME/mariadb-columnstore*$VERSION*$PKGTYPE $USERNAME@$SERVER:.;$PKGERASE1 dummy\n"
-if { $PASSWORD != "ssh -v" } {
+send "scp -v $HOME/mariadb-columnstore*$VERSION*$PKGTYPE $USERNAME@$SERVER:.\n"
+if { $PASSWORD != "ssh"} {
         set timeout 30
         expect {
                 "word: " { send "$PASSWORD\n" }
@@ -148,13 +146,9 @@ if { $PASSWORD != "ssh -v" } {
 }
 set timeout 180
 expect {
-        "dummy is not installed" { send_user "DONE" }
-        "dummy which isn't installed" { send_user "DONE" }
-        "directory"             { send_user "ERROR\n" ;
-                                        send_user "\n*** Installation ERROR\n" ;
-                                        exit 1 }
         "Connection closed"   { send_user "ERROR: Connection closed\n" ; exit 1 }
 	"Exit status 0" { send_user "DONE" }
+        "Exit status 1" { send_user "ERROR: scp failed" ; exit 1 }
 }
 send_user "\n"
 
@@ -165,8 +159,8 @@ if { $INSTALLTYPE == "initial"} {
 	#
 	send_user "Install MariaDB Columnstore Packages on Module               "
 
-	send "ssh -v $USERNAME@$SERVER '$PKGINSTALL ;$PKGERASE1 dummy'\n"
-	if { $PASSWORD != "ssh -v" } {
+	send "ssh -v $USERNAME@$SERVER '$PKGINSTALL '\n"
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -175,8 +169,6 @@ if { $INSTALLTYPE == "initial"} {
 	}
 	set timeout 180
 	expect {
-        "dummy is not installed" { send_user "DONE" }
-        "dummy which isn't installed" { send_user "DONE" }
 		"error: Failed dependencies" { send_user "ERROR: Failed dependencies\n" ; 
 									send_user "\n*** Installation ERROR\n" ; 
 										exit 1 }
@@ -184,7 +176,7 @@ if { $INSTALLTYPE == "initial"} {
 		"Connection closed"   { send_user "ERROR: Connection closed\n" ; exit 1 }
 		"needs"    { send_user "ERROR: disk space issue\n" ; exit 1 }
 		"conflicts"	   { send_user "ERROR: File Conflict issue\n" ; exit 1 }
-	                "Exit status 0" { send_user "DONE" }
+	        "Exit status 0" { send_user "DONE" }
 	}
 
 }
@@ -196,7 +188,7 @@ if { $INSTALLTYPE == "initial"} {
 	#
 	send_user "Copy MariaDB Columnstore Config file to Module              "
 	send "scp -v $INSTALLDIR/etc/*  $USERNAME@$SERVER:$INSTALLDIR/etc/.\n"
-	if { $PASSWORD != "ssh -v" } {
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -205,6 +197,7 @@ if { $INSTALLTYPE == "initial"} {
 	}
 	set timeout 30
 	expect {
+	        "Exit status 1" { send_user "ERROR: scp failed" ; exit 1 }
                 "Exit status 0" { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Connection closed"   { send_user "ERROR: Connection closed\n" ; exit 1 }
@@ -215,7 +208,7 @@ if { $INSTALLTYPE == "initial"} {
 	#
 	send_user "Copy Custom OS files to Module                  "
 	send "scp -v -r $INSTALLDIR/local/etc  $USERNAME@$SERVER:$INSTALLDIR/local/.\n"
-	if { $PASSWORD != "ssh -v" } {
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -224,6 +217,7 @@ if { $INSTALLTYPE == "initial"} {
 	}
 	set timeout 30
 	expect {
+	        "Exit status 1" { send_user "ERROR: scp failed" ; exit 1 }
 	        "Exit status 0" { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Connection closed"   { send_user "ERROR: Connection closed\n" ; exit 1 }
@@ -234,7 +228,7 @@ if { $INSTALLTYPE == "initial"} {
 	#
 	send_user "Copy MariaDB Columnstore OS files to Module                 "
 	send "scp -v $INSTALLDIR/local/etc/$MODULE/*  $USERNAME@$SERVER:$INSTALLDIR/local/.\n"
-	if { $PASSWORD != "ssh -v" } {
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -243,6 +237,7 @@ if { $INSTALLTYPE == "initial"} {
 	}
 	set timeout 30
 	expect {
+	        "Exit status 1" { send_user "ERROR: scp failed" ; exit 1 }
                 "Exit status 0" { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Connection closed"   { send_user "ERROR: Connection closed\n" ; exit 1 }
@@ -254,7 +249,7 @@ if { $INSTALLTYPE == "initial"} {
 	#
 	send_user "Run Module Installer                            "
 	send "ssh -v $USERNAME@$SERVER '$BASH $INSTALLDIR/bin/module_installer.sh --module=pm'\n"
-	if { $PASSWORD != "ssh -v" } {
+	if { $PASSWORD != "ssh" } {
 		set timeout 30
 		expect {
 			"word: " { send "$PASSWORD\n" }

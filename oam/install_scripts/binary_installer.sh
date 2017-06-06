@@ -70,11 +70,13 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "uninstall" } {
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"No route to host"   { send_user "ERROR: No route to host\n" ; exit 1 }
 		"MariaDB Columnstore uninstall completed"	{ send_user "DONE" }
+                "Exit status 0" { send_user "DONE" }
 	}
 	set timeout 30
 	expect {
 		"Read-only file system" { send_user "ERROR: local disk - Read-only file system\n" ; exit 1}
 		"MariaDB Columnstore uninstall completed"	{ send_user "DONE" }
+                "Exit status 0" { send_user "DONE" }
 	}
 	send_user "\n"
 }
@@ -82,7 +84,6 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "uninstall" } {
 if { $INSTALLTYPE == "uninstall" } { 
 	exit 0 
 }
-sleep 5
 
 if { $INSTALLTYPE == "initial" } { 
     # 
@@ -99,8 +100,9 @@ if { $INSTALLTYPE == "initial" } {
     }
     set timeout 120
     expect {
+            "Exit status 0" { send_user "DONE" }
 	    "100%" 				{ send_user "DONE" }
-	    "scp -v:"  			{ send_user "ERROR\n" ; 
+	    "scp :"  			{ send_user "ERROR\n" ; 
 							    send_user "\n*** Installation ERROR\n" ; 
 							    exit 1 }
 	    "Permission denied, please try again"         { send_user "ERROR: Invalid password\n" ; exit 1 }
@@ -112,8 +114,6 @@ if { $INSTALLTYPE == "initial" } {
 	    timeout { send_user "ERROR: Timeout\n" ; exit 1 }
     }
     send_user "\n"
-    #sleep to make sure it's finished
-    sleep 5
     #
     # install package
     #
@@ -128,6 +128,7 @@ if { $INSTALLTYPE == "initial" } {
     }
     set timeout 120
     expect {
+            "Exit status 0" { send_user "DONE" }
 	    "release=" 		  	{ send_user "DONE" }
 	    "No such file" 		  { send_user "ERROR: Binary Install Failed, binary/releasenum not found\n" ; exit 1 }
 	    "Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
@@ -137,8 +138,6 @@ if { $INSTALLTYPE == "initial" } {
 	    "No route to host"   { send_user "ERROR: No route to host\n" ; exit 1 }
 	    timeout { send_user "ERROR: Timeout\n" ; exit 1 }
     }
-    #sleep to give time for cat MariaDB Columnstore/releasenum to complete
-    sleep 5
 }
 
 send_user "\n"
@@ -154,6 +153,7 @@ expect {
 set timeout 60
 # check return
 expect {
+        "Exit status 0" { send_user "DONE" }
 	"No such file"   { send_user "ERROR: post-install Not Found\n" ; exit 1 }
 	"MariaDB Columnstore syslog logging not working" { send_user "ERROR: MariaDB Columnstore System logging not setup\n" ; exit 1 }
 	"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
@@ -164,8 +164,6 @@ expect {
 	"postConfigure" { send_user "DONE" }
 }
 send_user "\n"
-sleep 10
-#
 if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	#
 	# copy over calpont config file
@@ -250,6 +248,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	}
 	set timeout 60
 	expect {
+                "Exit status 0" { send_user "DONE" }
 		"!!!Module" 				  			{ send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"FAILED"   								{ send_user "ERROR: missing module file\n" ; exit 1 }
@@ -260,7 +259,6 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 		"No such file"   { send_user "ERROR: File Not Found\n" ; exit 1 }
 	}
 	send_user "\n"
-	sleep 10
 	if { $MODULETYPE == "um" || $SERVERTYPE == "2" || $SERVERTYPE == "pmwithum" } { 
 		#
 		# run mysql setup scripts
@@ -276,6 +274,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 		}
 		set timeout 60
 		expect {
+                	"Exit status 0" { send_user "DONE" }
 			"ERROR" { send_user "ERROR: Daemon failed to run";
 			exit 1 }
 			"FAILED" { send_user "ERROR: Daemon failed to run";
@@ -296,6 +295,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 		}
 		set timeout 60
 		expect {
+                	"Exit status 0" { send_user "DONE" }
 			"Shutting down mysql." { send_user "DONE" }
 			timeout { send_user "DONE" }
 			"ERROR" { send_user "ERROR: Daemon failed to run";
