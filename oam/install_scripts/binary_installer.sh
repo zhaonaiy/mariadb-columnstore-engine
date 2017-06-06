@@ -54,7 +54,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "uninstall" } {
 	send_user "Uninstall MariaDB Columnstore Package                       "
 	send " \n"
 	send date\n
-	send "ssh $USERNAME@$SERVER 'rm -f /etc/init.d/columnstore /etc/init.d/mysql-Columnstore $INSTALLDIR/releasenum >/dev/null 2>&1'\n"
+	send "ssh -v $USERNAME@$SERVER 'rm -f /etc/init.d/columnstore /etc/init.d/mysql-Columnstore $INSTALLDIR/releasenum >/dev/null 2>&1'\n"
 	set timeout 20
 	expect {
 		"Host key verification failed" { send_user "FAILED: Host key verification failed\n" ; exit 1}
@@ -91,7 +91,7 @@ if { $INSTALLTYPE == "initial" } {
     send_user "Copy New MariaDB Columnstore Package to Module              "
     send " \n"
     send date\n
-    send "scp $CALPONTPKG $USERNAME@$SERVER:$CALPONTPKG\n"
+    send "scp -v $CALPONTPKG $USERNAME@$SERVER:$CALPONTPKG\n"
     set timeout 10
     expect {
 	    "word: " { send "$PASSWORD\n" }
@@ -100,7 +100,7 @@ if { $INSTALLTYPE == "initial" } {
     set timeout 120
     expect {
 	    "100%" 				{ send_user "DONE" }
-	    "scp:"  			{ send_user "ERROR\n" ; 
+	    "scp -v:"  			{ send_user "ERROR\n" ; 
 							    send_user "\n*** Installation ERROR\n" ; 
 							    exit 1 }
 	    "Permission denied, please try again"         { send_user "ERROR: Invalid password\n" ; exit 1 }
@@ -120,7 +120,7 @@ if { $INSTALLTYPE == "initial" } {
     send_user "Install MariaDB Columnstore Package on Module               "
     send " \n"
     send date\n
-    send "ssh $USERNAME@$SERVER 'tar -C $PREFIX --exclude db -zxf $CALPONTPKG;cat $INSTALLDIR/releasenum'\n"
+    send "ssh -v $USERNAME@$SERVER 'tar -C $PREFIX --exclude db -zxf $CALPONTPKG;cat $INSTALLDIR/releasenum'\n"
     set timeout 10
     expect {
 	    "word: " { send "$PASSWORD\n" }
@@ -145,7 +145,7 @@ send_user "\n"
 send_user "Run post-install script                         "
 send " \n"
 send date\n
-send "ssh $USERNAME@$SERVER '$INSTALLDIR/bin/post-install --installdir=$INSTALLDIR'\n"
+send "ssh -v $USERNAME@$SERVER '$INSTALLDIR/bin/post-install --installdir=$INSTALLDIR'\n"
 set timeout 10
 expect {
 	"word: " { send "$PASSWORD\n" }
@@ -173,7 +173,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	send_user "Copy MariaDB Columnstore Config file to Module              "
 	send " \n"
 	send date\n
-	send "scp $INSTALLDIR/etc/* $USERNAME@$SERVER:$INSTALLDIR/etc\n"
+	send "scp -v $INSTALLDIR/etc/* $USERNAME@$SERVER:$INSTALLDIR/etc\n"
 	set timeout 10
 	expect {
 		"word: " { send "$PASSWORD\n" }
@@ -181,6 +181,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	}
 	set timeout 30
 	expect {
+		"Exit status 0" { send_user "DONE" }
 		-re {[$#] } 		  		  { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Read-only file system" { send_user "ERROR: local disk - Read-only file system\n" ; exit 1}
@@ -195,7 +196,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	send_user "Copy Custom OS files to Module                  "
 	send " \n"
 	send date\n
-	send "scp -r $INSTALLDIR/local/etc $USERNAME@$SERVER:$INSTALLDIR/local\n"
+	send "scp -v -r $INSTALLDIR/local/etc $USERNAME@$SERVER:$INSTALLDIR/local\n"
 	set timeout 10
 	expect {
 		"word: " { send "$PASSWORD\n" }
@@ -203,6 +204,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	}
 	set timeout 60
 	expect {
+                "Exit status 0" { send_user "DONE" }
 		-re {[$#] } 		  		  { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Read-only file system" { send_user "ERROR: local disk - Read-only file system\n" ; exit 1}
@@ -217,7 +219,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	send_user "Copy MariaDB Columnstore OS files to Module                 "
 	send " \n"
 	send date\n
-	send "scp $INSTALLDIR/local/etc/$MODULE/*  $USERNAME@$SERVER:$INSTALLDIR/local\n"
+	send "scp -v $INSTALLDIR/local/etc/$MODULE/*  $USERNAME@$SERVER:$INSTALLDIR/local\n"
 	set timeout 10
 	expect {
 		"word: " { send "$PASSWORD\n" }
@@ -226,6 +228,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	}
 	set timeout 60
 	expect {
+                "Exit status 0" { send_user "DONE" }
 		-re {[$#] } 		  		  { send_user "DONE" }
 		"Permission denied, please try again"   { send_user "ERROR: Invalid password\n" ; exit 1 }
 		"Connection refused"   { send_user "ERROR: Connection refused\n" ; exit 1 }
@@ -239,7 +242,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 	send_user "Run Module Installer                            "
 	send " \n"
 	send date\n
-	send "ssh $USERNAME@$SERVER '$INSTALLDIR/bin/module_installer.sh --module=$MODULETYPE --port=$MYSQLPORT --installdir=$INSTALLDIR'\n"
+	send "ssh -v $USERNAME@$SERVER '$INSTALLDIR/bin/module_installer.sh --module=$MODULETYPE --port=$MYSQLPORT --installdir=$INSTALLDIR'\n"
 	set timeout 10
 	expect {
 		"word: " { send "$PASSWORD\n" }
@@ -265,7 +268,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 		send_user "Run MySQL Setup Scripts on Module               "
 		send " \n"
 		send date\n
-		send "ssh $USERNAME@$SERVER '$INSTALLDIR/bin/post-mysqld-install --installdir=$INSTALLDIR'\n"
+		send "ssh -v $USERNAME@$SERVER '$INSTALLDIR/bin/post-mysqld-install --installdir=$INSTALLDIR'\n"
 		set timeout 10
 		expect {
 			"word: " { send "$PASSWORD\n" }
@@ -285,7 +288,7 @@ if { $INSTALLTYPE == "initial" || $INSTALLTYPE == "nonDistribute" } {
 
 		send " \n"
 		send date\n
-		send "ssh $USERNAME@$SERVER '$INSTALLDIR/bin/post-mysql-install --installdir=$INSTALLDIR'\n"
+		send "ssh -v $USERNAME@$SERVER '$INSTALLDIR/bin/post-mysql-install --installdir=$INSTALLDIR'\n"
 		set timeout 10
 		expect {
 			"word: " { send "$PASSWORD\n" }
