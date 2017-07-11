@@ -414,22 +414,46 @@ int main(int argc, char *argv[])
 		exit (1);
 	}
 
-	//if InitialInstallFlag is set, then an install has been done
-	// run pre-uninstall to clean from previous install and continue
-	try {
-		string InitialInstallFlag = sysConfig->getConfig(InstallSection, "InitialInstallFlag");
-		if ( InitialInstallFlag == "y" ) {
-			cmd = installDir + "/bin/pre-uninstall --quiet > /dev/null 2>&1";
-			system(cmd.c_str());
-		}
+	// determine package type
+       	string EEPackageType;
+
+        if (!rootUser)
+		EEPackageType = "binary";
+	else
+	{
+       		int rtnCode = system("rpm -qi mariadb-columnstore-platform > /tmp/columnstore.txt 2>&1");
+           	if (WEXITSTATUS(rtnCode) == 0)
+        		EEPackageType = "rpm";
+        	else {
+        		rtnCode = system("dpkg -s mariadb-columnstore-platform > /tmp/columnstore.txt 2>&1");
+	            if (WEXITSTATUS(rtnCode) == 0)
+                		EEPackageType = "deb";
+                	else
+                        	EEPackageType = "binary";
+		}		
 	}
-	catch(...)
-	{}
 
-	//run post install for coverage of possible binary package install
-	cmd = installDir + "/bin/post-install --installdir=" + installDir + " > /dev/null 2>&1";
-	system(cmd.c_str());
+      	try {
+        	sysConfig->setConfig(InstallSection, "EEPackageType", EEPackageType);
+       	}
+       	catch(...)
+     	{
+        	cout << "ERROR: Problem setting EEPackageType from the MariaDB ColumnStore System Configuration file" << endl;
+            	exit(1);
+     	}
 
+    	if ( !writeConfig(sysConfig) ) {
+        	cout << "ERROR: Failed trying to update MariaDB ColumnStore System Configuration file" << endl;
+                exit(1);
+       	}
+
+       	if ( EEPackageType = "binary" )
+	{
+	    //run post install
+	    cmd = installDir + "/bin/post-install --installdir=" + installDir + " > /dev/null 2>&1";
+	    system(cmd.c_str());
+	}
+	
 	//check Config saved files
 	if ( !checkSaveConfigFile())
 	{
@@ -944,6 +968,61 @@ int main(int argc, char *argv[])
 		{}
 	}
 
+		// User Module Round Robin setup
+	cout <<		"NOTE: The MariaDB ColumnStore User Module Round Robin query distribution feature" << endl;
+	cout <<		"      determines if ColumnStore Query requests are distrubuted across all User Modules" << endl;
+	cout <<		"      for processing. This feature can be enabled, disabled." << endl;
+	cout <<		"      Enabled means that all ColumnStore Query requests are distrubuted across all User Modules" << endl;
+	cout <<		"      for Front-end processing. User can specify which User Modules they want in the Round-Robin" << endl;
+	cout <<		"      pool and which User Modules they want to only process local ColumnStore Query requests." << endl << endl;
+	cout <<		"      Disabled means that all ColumnStore Query requests processed on the local User Module" << endl;
+	cout <<		"      where the query was submitted for Front-end processing." << endl;
+
+	string UMroundRobin = "enabled";
+	try {
+		UMroundRobin = sysConfig->getConfig(InstallSection, "UMroundRobin");
+	}
+	catch(...)
+	{
+		UMroundRobin = "enabled";
+	}
+	
+	string answer = "y";
+
+	while(true) {
+	      if ( UMroundRobin == "enabled" )
+		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature is Fully Enabled, do you want to leave Fully Enabled? [y,n] (y) > ";
+	      else
+		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature, do you want to enable? [y,n] (y) > ";
+
+	      pcommand = callReadline(prompt.c_str());
+	      if (pcommand) {
+		  if (strlen(pcommand) > 0) answer = pcommand;
+		  callFree(pcommand);
+	      }
+
+	      if ( answer == "y" || answer == "n" ) {
+		  cout << endl;
+		  break;
+	      }
+	      else
+		  cout << "Invalid Entry, please enter 'y' for yes or 'n' for no" << endl;
+
+	      if ( noPrompting )
+		      exit(1);
+	}
+
+	if ( answer == "y" )
+	      UMroundRobin = "enabled";
+	else
+	      UMroundRobin = "disabled";
+
+	try {
+	      sysConfig->setConfig(InstallSection, "UMroundRobin", UMroundRobin);
+	}
+	catch(...)
+	{}
+	
 	if ( !writeConfig(sysConfig) ) { 
 		cout << "ERROR: Failed trying to update MariaDB ColumnStore System Configuration file" << endl; 
 		exit(1);
@@ -2737,40 +2816,11 @@ int main(int argc, char *argv[])
 	/* create a thread_data_t argument array */
 	thread_data_t thr_data[childmodulelist.size()];
 
-	// determine package type
-       	string EEPackageType;
-
-        if (!rootUser)
-		EEPackageType = "binary";
-	else
-	{
-       		int rtnCode = system("rpm -qi mariadb-columnstore-platform > /tmp/columnstore.txt 2>&1");
-           	if (WEXITSTATUS(rtnCode) == 0)
-        		EEPackageType = "rpm";
-        	else {
-        		rtnCode = system("dpkg -s mariadb-columnstore-platform > /tmp/columnstore.txt 2>&1");
-	            if (WEXITSTATUS(rtnCode) == 0)
-                		EEPackageType = "deb";
-                	else
-                        	EEPackageType = "binary";
-		}		
-	}
-
-      	try {
-        	sysConfig->setConfig(InstallSection, "EEPackageType", EEPackageType);
-       	}
-       	catch(...)
-     	{
-        	cout << "ERROR: Problem setting EEPackageType from the MariaDB ColumnStore System Configuration file" << endl;
-            	exit(1);
-     	}
-
     	if ( !writeConfig(sysConfig) ) {
         	cout << "ERROR: Failed trying to update MariaDB ColumnStore System Configuration file" << endl;
                 exit(1);
        	}
 
-	
 	string install = "y";
 
 	if ( IserverTypeInstall != oam::INSTALL_COMBINE_DM_UM_PM || 
