@@ -447,7 +447,7 @@ int main(int argc, char *argv[])
                 exit(1);
        	}
 
-       	if ( EEPackageType = "binary" )
+       	if ( EEPackageType == "binary" )
 	{
 	    //run post install
 	    cmd = installDir + "/bin/post-install --installdir=" + installDir + " > /dev/null 2>&1";
@@ -968,7 +968,7 @@ int main(int argc, char *argv[])
 		{}
 	}
 
-		// User Module Round Robin setup
+	// User Module Round Robin setup
 	cout <<		"NOTE: The MariaDB ColumnStore User Module Round Robin query distribution feature" << endl;
 	cout <<		"      determines if ColumnStore Query requests are distrubuted across all User Modules" << endl;
 	cout <<		"      for processing. This feature can be enabled, disabled." << endl;
@@ -978,19 +978,19 @@ int main(int argc, char *argv[])
 	cout <<		"      Disabled means that all ColumnStore Query requests processed on the local User Module" << endl;
 	cout <<		"      where the query was submitted for Front-end processing." << endl;
 
-	string UMroundRobin = "enabled";
+	string UMroundRobin = "y";
 	try {
 		UMroundRobin = sysConfig->getConfig(InstallSection, "UMroundRobin");
 	}
 	catch(...)
 	{
-		UMroundRobin = "enabled";
+		UMroundRobin = "y";
 	}
 	
 	string answer = "y";
 
 	while(true) {
-	      if ( UMroundRobin == "enabled" )
+	      if ( UMroundRobin == "y" )
 		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature is Fully Enabled, do you want to leave Fully Enabled? [y,n] (y) > ";
 	      else
 		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature, do you want to enable? [y,n] (y) > ";
@@ -1012,10 +1012,7 @@ int main(int argc, char *argv[])
 		      exit(1);
 	}
 
-	if ( answer == "y" )
-	      UMroundRobin = "enabled";
-	else
-	      UMroundRobin = "disabled";
+	UMroundRobin = answer;
 
 	try {
 	      sysConfig->setConfig(InstallSection, "UMroundRobin", UMroundRobin);
@@ -1429,6 +1426,15 @@ int main(int argc, char *argv[])
 		cout << "existing Instance IDs or have the Instances created." << endl;
 		cout << "You will be prompted during the Module Configuration setup section." << endl;
 	}
+
+	// User Module Round Robin feature
+	cout <<	"NOTE: The MariaDB ColumnStore User Module Round Robin query distribution feature" << endl;
+	cout <<	"      determines if ColumnStore Query requests are distrubuted to other User Modules" << endl;
+	cout <<	"      or all processed locally. When configuring the modules with User Module Functionality," << endl;
+	cout <<	"      you can choice to have that Module as part of the Round Robin query distribution pool or not." << endl;
+	cout <<	"      If its in the pool, then that Module will receive queries from other User Modules as" << endl;
+	cout <<	"      well as distribute its local query both localy and to other Mdoules in the pool." << endl;
+	cout <<	"      If it configured to not be in the pool then it will only process local Query requests." << endl << endl;
 
 	//get OAM Parent Module IP addresses and Host Name, if it exist
 	for ( unsigned int i = 0 ; i < sysModuleTypeConfig.moduletypeconfig.size(); i++)
@@ -2017,7 +2023,38 @@ int main(int argc, char *argv[])
 						cout << "ERROR: Problem setting IP address in the MariaDB ColumnStore System Configuration file" << endl;
 						exit(1);
 					}
-	
+
+					//check for UM round robin on this UM
+					bool umRR = true;
+					if ( moduleType == "um" ||  
+					    ( moduleType == "pm" && IserverTypeInstall == oam::INSTALL_COMBINE_DM_UM_PM ) )
+					{
+					      string answer = "y";
+
+					      while(true) {
+						    prompt = "Do you want to have " + newModuleName + " in the Distrubuted Query Round Robin Pool? [y,n] (y) > ";
+
+						    pcommand = callReadline(prompt.c_str());
+						    if (pcommand) {
+							if (strlen(pcommand) > 0) answer = pcommand;
+							callFree(pcommand);
+						    }
+
+						    if ( answer == "y" || answer == "n" ) {
+							cout << endl;
+							break;
+						    }
+						    else
+							cout << "Invalid Entry, please enter 'y' for yes or 'n' for no" << endl;
+
+						    if ( noPrompting )
+							    exit(1);
+					      }
+
+					      if ( answer == "n" )
+						    umRR = false;
+					}
+
 					if ( newModuleHostName == oam::UnassignedName && moduleHostNameFound )
 						// exit out to next module ID
 						break;
@@ -2082,7 +2119,11 @@ int main(int argc, char *argv[])
 							//set User Module's IP Addresses
 							string Section = "ExeMgr" + oam.itoa(moduleID);
 			
-							sysConfig->setConfig(Section, "IPAddr", newModuleIPAddr);
+							if ( umRR )
+							      sysConfig->setConfig(Section, "IPAddr", newModuleIPAddr);
+							else
+							      sysConfig->setConfig(Section, "IPAddr", "127.0.0.1");
+
 							sysConfig->setConfig(Section, "Port", "8601");
 							sysConfig->setConfig(Section, "Module", parentOAMModuleName);
 
@@ -2091,7 +2132,7 @@ int main(int argc, char *argv[])
 							sysConfig->setConfig("DMLProc", "IPAddr", newModuleIPAddr);
 						}
 
-						//set User Module's IP Addresses
+						//set Performance Module's ExeMgr IP Addresses
 						if ( pmwithum ) {
 							string Section = "ExeMgr" + oam.itoa(moduleID+umNumber);
 		
@@ -2136,7 +2177,11 @@ int main(int argc, char *argv[])
 							if ( moduleType == "pm" && pmwithum )
 								Section = "ExeMgr" + oam.itoa(moduleID+umNumber);
 		
-							sysConfig->setConfig(Section, "IPAddr", newModuleIPAddr);
+							if ( umRR )
+							      sysConfig->setConfig(Section, "IPAddr", newModuleIPAddr);
+							else
+							      sysConfig->setConfig(Section, "IPAddr", "127.0.0.1");
+
 							sysConfig->setConfig(Section, "Port", "8601");
 							sysConfig->setConfig(Section, "Module", newModuleName);
 						}
