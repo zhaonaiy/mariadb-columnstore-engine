@@ -34,6 +34,8 @@ using namespace std;
 #include <boost/thread.hpp>
 using namespace boost;
 
+#include "liboamcpp.h"
+
 #include "configcpp.h"
 using namespace config;
 
@@ -94,14 +96,40 @@ void ClientRotator::loadClients()
 	string pmWithUMStr = fCf->getConfig("Installation", "PMwithUM");
 	bool pmWithUM = (pmWithUMStr == "y" || pmWithUMStr == "Y");
 
-	// check current module type
-	if (!fLocalQuery && pmWithUM)
+	
+	string module = getModule();
+	if (!module.empty() && (module[0] == 'U' || module[0] == 'u'))
 	{
-		string module = getModule();
-		if (!module.empty() && (module[0] == 'P' || module[0] == 'p'))
-			fLocalQuery = true;
+	      string tmid = "1";
+	      oam::Oam oam;
+	      oam::oamModuleInfo_t minfo;
+	      try {
+		      minfo = oam.getModuleInfo();
+		      tmid = boost::get<2>(minfo);
+		      if (tmid == "0")
+			      tmid = "1";
+	      } catch (...) {
+		      tmid = "1";
+	      }
+	
+	      string exemgrConf = "ExeMgr" + tmid;
+	      string ExeMgrIpAddr = fCf->getConfig(exemgrConf, "IPAddr");
+	      if ( ExeMgrIpAddr == LOCAL_EXEMGR_IP )
+	      {
+		    fLocalQuery = true;
+	      }
 	}
-
+	else
+	{
+	    // check current module type
+	    if (!fLocalQuery && pmWithUM)
+	    {
+    //		string module = getModule();
+		    if (!module.empty() && (module[0] == 'P' || module[0] == 'p'))
+			    fLocalQuery = true;
+	    }
+	}
+	
 	// connect to loopback ExeMgr for local query set up
 	if (fLocalQuery)
 	{
