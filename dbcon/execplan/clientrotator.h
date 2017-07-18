@@ -151,6 +151,7 @@ private:
 	int fDebug;
 	boost::mutex fClientLock;
 	bool fLocalQuery;
+	bool fpmWithUM;
 };
 
 

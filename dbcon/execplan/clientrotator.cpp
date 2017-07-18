@@ -82,21 +82,18 @@ ClientRotator::ClientRotator(uint32_t sid, const std::string& name, bool localQu
      fName(name), fSessionId(sid), fClient(0), fClients(), fCf(Config::makeConfig()),
      fDebug(0), fLocalQuery(localQuery)
 {
-	if (! fCf)
-		throw runtime_error((string)__FILE__ + ": No configuration file");
-	fDebug = static_cast<int>(Config::fromText(fCf->getConfig("CalpontConnector", "DebugLevel")));
-}
-
-void ClientRotator::loadClients()
-{
 	//This object is statically allocated somewhere. We need to reload the config file here
 	// to search the extproc env for changes made after libcalora.so is loaded.
 	fCf = Config::makeConfig();
 
-	string pmWithUMStr = fCf->getConfig("Installation", "PMwithUM");
-	bool pmWithUM = (pmWithUMStr == "y" || pmWithUMStr == "Y");
+	if (! fCf)
+		throw runtime_error((string)__FILE__ + ": No configuration file");
 
+	fDebug = static_cast<int>(Config::fromText(fCf->getConfig("CalpontConnector", "DebugLevel")));
 	
+	string pmWithUMStr = fCf->getConfig("Installation", "PMwithUM");
+	fpmWithUM = (pmWithUMStr == "y" || pmWithUMStr == "Y");
+
 	string module = getModule();
 	if (!module.empty() && (module[0] == 'U' || module[0] == 'u'))
 	{
@@ -122,14 +119,19 @@ void ClientRotator::loadClients()
 	else
 	{
 	    // check current module type
-	    if (!fLocalQuery && pmWithUM)
+	    if (!fLocalQuery && fpmWithUM)
 	    {
-    //		string module = getModule();
 		    if (!module.empty() && (module[0] == 'P' || module[0] == 'p'))
 			    fLocalQuery = true;
 	    }
 	}
 	
+	cout << "Local Query: " << fLocalQuery << endl;
+
+}
+
+void ClientRotator::loadClients()
+{	
 	// connect to loopback ExeMgr for local query set up
 	if (fLocalQuery)
 	{
@@ -151,7 +153,7 @@ void ClientRotator::loadClients()
 			string moduleStr = fCf->getConfig(ss.str(), "Module");
 			// "if the system is not running in a 'PM with UM' config, the module type is unspecified, or the
 			// module is specified as a UM, use it"
-			if (!pmWithUM || moduleStr.empty() || moduleStr[0] == 'u' || moduleStr[0] == 'U')
+			if (!fpmWithUM || moduleStr.empty() || moduleStr[0] == 'u' || moduleStr[0] == 'U')
 				fClients.push_back(ss.str());
 		}
 	} while ( str.length() );

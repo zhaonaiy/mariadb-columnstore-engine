@@ -967,58 +967,6 @@ int main(int argc, char *argv[])
 		catch(...)
 		{}
 	}
-
-	// User Module Round Robin setup
-	cout <<		"NOTE: The MariaDB ColumnStore User Module Round Robin query distribution feature" << endl;
-	cout <<		"      determines if ColumnStore Query requests are distrubuted across all User Modules" << endl;
-	cout <<		"      for processing. This feature can be enabled, disabled." << endl;
-	cout <<		"      Enabled means that all ColumnStore Query requests are distrubuted across all User Modules" << endl;
-	cout <<		"      for Front-end processing. User can specify which User Modules they want in the Round-Robin" << endl;
-	cout <<		"      pool and which User Modules they want to only process local ColumnStore Query requests." << endl << endl;
-	cout <<		"      Disabled means that all ColumnStore Query requests processed on the local User Module" << endl;
-	cout <<		"      where the query was submitted for Front-end processing." << endl;
-
-	string UMroundRobin = "y";
-	try {
-		UMroundRobin = sysConfig->getConfig(InstallSection, "UMroundRobin");
-	}
-	catch(...)
-	{
-		UMroundRobin = "y";
-	}
-	
-	string answer = "y";
-
-	while(true) {
-	      if ( UMroundRobin == "y" )
-		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature is Fully Enabled, do you want to leave Fully Enabled? [y,n] (y) > ";
-	      else
-		      prompt = "MariaDB ColumnStore User Module Round Robin query distribution feature, do you want to enable? [y,n] (y) > ";
-
-	      pcommand = callReadline(prompt.c_str());
-	      if (pcommand) {
-		  if (strlen(pcommand) > 0) answer = pcommand;
-		  callFree(pcommand);
-	      }
-
-	      if ( answer == "y" || answer == "n" ) {
-		  cout << endl;
-		  break;
-	      }
-	      else
-		  cout << "Invalid Entry, please enter 'y' for yes or 'n' for no" << endl;
-
-	      if ( noPrompting )
-		      exit(1);
-	}
-
-	UMroundRobin = answer;
-
-	try {
-	      sysConfig->setConfig(InstallSection, "UMroundRobin", UMroundRobin);
-	}
-	catch(...)
-	{}
 	
 	if ( !writeConfig(sysConfig) ) { 
 		cout << "ERROR: Failed trying to update MariaDB ColumnStore System Configuration file" << endl; 
@@ -2024,6 +1972,10 @@ int main(int argc, char *argv[])
 						exit(1);
 					}
 
+					if ( newModuleHostName == oam::UnassignedName && moduleHostNameFound )
+						// exit out to next module ID
+						break;
+	
 					//check for UM round robin on this UM
 					bool umRR = true;
 					if ( moduleType == "um" ||  
@@ -2032,6 +1984,7 @@ int main(int argc, char *argv[])
 					      string answer = "y";
 
 					      while(true) {
+						    cout << endl;
 						    prompt = "Do you want to have " + newModuleName + " in the Distrubuted Query Round Robin Pool? [y,n] (y) > ";
 
 						    pcommand = callReadline(prompt.c_str());
@@ -2055,10 +2008,6 @@ int main(int argc, char *argv[])
 						    umRR = false;
 					}
 
-					if ( newModuleHostName == oam::UnassignedName && moduleHostNameFound )
-						// exit out to next module ID
-						break;
-	
 					if (moduleType == "pm" && moduleDisableState == oam::ENABLEDSTATE) {
 		
 						switch(nicID) {
@@ -2938,10 +2887,10 @@ int main(int argc, char *argv[])
 		    
 			//check if pkgs are located in $HOME directory
 			if ( EEPackageType == "rpm")
-				columnstorePackage = HOME + "/" + "mariadb-columnstore-" + version + "*.rpm.tar.gz";
+				columnstorePackage = HOME + "/" + "mariadb-columnstore-*" + version + "*.rpm";
 			else
 				if ( EEPackageType == "deb") 
-					columnstorePackage = HOME + "/" + "mariadb-columnstore-" + version + "*.deb.tar.gz";
+					columnstorePackage = HOME + "/" + "mariadb-columnstore-*" + version + "*.deb";
 				else
 					columnstorePackage = HOME + "/" + "mariadb-columnstore-" + version + "*.bin.tar.gz";
 
