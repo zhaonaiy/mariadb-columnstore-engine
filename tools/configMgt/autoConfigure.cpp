@@ -1860,7 +1860,27 @@ int main(int argc, char *argv[])
 	}
 	catch(...)
 	{}
+	
+		try {
+		string DistributeConfigFiles = sysConfigOld->getConfig("Installation", "DistributeConfigFiles");
 
+		if ( !DistributeConfigFiles.empty() )
+		{
+			try {
+				sysConfigNew->setConfig("Installation", "DistributeConfigFiles", DistributeConfigFiles);
+			}
+			catch(...)
+			{
+				cout << "ERROR: Problem setting DistributeConfigFiles in the Calpont System Configuration file" << endl;
+				exit(-1);
+			}
+		}
+	}
+	catch(...)
+	{}
+
+
+	
 	//Write out Updated System Configuration File
 	sysConfigNew->write();
 }

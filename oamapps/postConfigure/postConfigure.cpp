@@ -183,7 +183,9 @@ bool mysqlRep = false;
 string MySQLRep = "y";
 string PMwithUM = "n";
 bool amazonInstall = false;
-bool nonDistribute = false;
+bool nonDistributeInstall = false;
+bool nonDistributeConfig = false;
+
 
 string DataFileEnvFile;
 
@@ -285,7 +287,7 @@ int main(int argc, char *argv[])
 			cout << "	Enter one of the options within [], if available, or" << endl;
 			cout << "	Enter a new value" << endl << endl;
 			cout << endl;
-   			cout << "Usage: postConfigure [-h][-c][-u][-p][-s][-port][-i][-n]" << endl;
+   			cout << "Usage: postConfigure [-h][-c][-u][-p][-s][-port][-i][-n][-nc]" << endl;
 			cout << "   -h  Help" << endl;
 			cout << "   -c  Config File to use to extract configuration data, default is Columnstore.xml.rpmsave" << endl;
 			cout << "   -u  Upgrade, Install using the Config File from -c, default to Columnstore.xml.rpmsave" << endl;
@@ -294,7 +296,10 @@ int main(int argc, char *argv[])
 			cout << "   -s  Single Threaded Remote Install" << endl;
 			cout << "   -port MariaDB ColumnStore Port Address" << endl;
 			cout << "   -i Non-root Install directory, Only use for non-root installs" << endl;
-			cout << "   -n Non-distributed install, meaning it will not install the remote nodes" << endl;
+			cout << "   -n Non-distributed Package install, meaning packages will not install the remote nodes" << endl;
+			cout << "	via postConfigure" << endl;
+			cout << "   -nc Non-distributed Configuration updates, meaning ColumnStore Configuration Filess will not" << endl;
+			cout << "	 distrubuted or updated ColumnStore Process Management" << endl;
 			exit (0);
 		}
       		else if( string("-s") == argv[i] )
@@ -331,7 +336,9 @@ int main(int argc, char *argv[])
 			noPrompting = true;
 		// for backward compatibility
 		else if( string("-n") == argv[i] )
-			nonDistribute = true;
+			nonDistributeInstall = true;
+		else if( string("-nc") == argv[i] )
+			nonDistributeConfig = true;
 		else if( string("-port") == argv[i] ) {
 			i++;
 			if (i >= argc ) {
@@ -596,7 +603,7 @@ int main(int argc, char *argv[])
 	catch(...) {}
 
 	//check for non-Distributed Install
-	if ( nonDistribute )
+	if ( nonDistributeInstall )
 	{
 	    try {
 		oam.setSystemConfig("DistributedInstall", "n");
@@ -613,9 +620,30 @@ int main(int argc, char *argv[])
 	    {}
 	    
 	    if ( DistributedInstall == "n" )
-		nonDistribute = true;
+		nonDistributeInstall = true;
 	}
-	
+
+	//check for non-Distributed Config
+	if ( nonDistributeConfig )
+	{
+	    try {
+		oam.setSystemConfig("DistributeConfigFiles", "n");
+	    }
+	    catch(...) {}
+	}
+	else
+	{
+	    //get Distributed Install
+	    try {
+		    DistributedInstall = sysConfig->getConfig(InstallSection, "DistributeConfigFiles");
+	    }
+	    catch(...)
+	    {}
+	    
+	    if ( nonDistributeConfig == "n" )
+		nonDistributeConfig = true;
+	}
+
 	cout << endl;
 
 	cout << "===== Setup System Server Type Configuration =====" << endl << endl;
@@ -1080,8 +1108,11 @@ int main(int argc, char *argv[])
 	if ( mysqlRep )
 		cout << endl << "NOTE: MariaDB ColumnStore Replication Feature is enabled" << endl;
 
-	if ( nonDistribute )
+	if ( nonDistributeInstall )
 		cout << endl << "NOTE: MariaDB ColumnStore Non-Distributed Install Feature is enabled" << endl;
+
+	if ( nonDistributeConfig )
+		cout << endl << "NOTE: MariaDB ColumnStore Non-Distributed Configuration Feature is enabled" << endl;
 
 	//Write out Updated System Configuration File
 	try {
@@ -2773,7 +2804,7 @@ int main(int argc, char *argv[])
 			pmNumber > 1 ) {
 	
 	    //skip interface with remote servers and perform install
-	    if ( !nonDistribute )
+	    if ( !nonDistributeInstall )
 	    {
 		//
 		// perform remote install of other servers in the system
@@ -3241,7 +3272,7 @@ int main(int argc, char *argv[])
 	else
 		cout << "The MariaDB ColumnStore system logging is setup and working on local server" << endl;
 
-	if ( nonDistribute )
+	if ( nonDistributeInstall )
 	      cout << endl << "MariaDB ColumnStore System Configuration and Installation is Completed" << endl;
 
 	//
@@ -3259,7 +3290,7 @@ int main(int argc, char *argv[])
 		cout << "System Installation is complete. If any part of the install failed," << endl;
 		cout << "the problem should be investigated and resolved before continuing." << endl << endl;
 
-		if ( nonDistribute )
+		if ( nonDistributeInstall )
 		    cout << "Non-Distrubuted Install: make sure all other modules have MariaDB ColumnStore" << endl;
 		    cout << "package installed and the associated service started."<< endl << endl;
 
@@ -3282,7 +3313,7 @@ int main(int argc, char *argv[])
 	
 		if ( start == "y" ) {
 	
-			if (hdfs && !nonDistribute )
+			if (hdfs && !nonDistributeInstall )
 			{
 				cout << endl << "----- Starting MariaDB ColumnStore Service on all Modules -----" << endl << endl;
 				string cmd = "pdsh -a '" + installDir + "/bin/columnstore restart' > /tmp/postConfigure.pdsh 2>&1";
@@ -3294,7 +3325,7 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-/*			    if ( !nonDistribute )
+/*			    if ( !nonDistributeInstall )
 			    {
 				if ( password.empty() ) {
 					while(true)

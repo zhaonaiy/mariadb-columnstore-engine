@@ -459,6 +459,9 @@
 		<JavaPath>unassigned</JavaPath>
 		<MySQLPort>3306</MySQLPort>
 		<MySQLPasswordConfig>unassigned</MySQLPasswordConfig>
+		<AmazonDeviceName>/dev/xvd</AmazonDeviceName>
+		<DistributedInstall>y</DistributedInstall>
+		<DistributeConfigFiles>y</DistributeConfigFiles>		
 	</Installation>
 	<ExtentMap>
 		<!--

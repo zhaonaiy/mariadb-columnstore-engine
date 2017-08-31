@@ -4463,13 +4463,57 @@ int processCommand(string* arguments)
         }
         break;
 
-       case 39:
-		{
+       case 39:	//	enableColumnStoreDistrubuteConfig
+	{
+		string DistributeConfigFiles;
+		try {
+			oam.getSystemConfig("DistributeConfigFiles", DistributeConfigFiles);
 		}
-		break;
+		catch(...) {}
 
-        case 40: 
+		if ( DistributeConfigFiles == "y" ) {
+			string warning = "MariaDB ColumnStore Distribute Config Files Feature is already enabled";
+			// confirm request
+			if (confirmPrompt(warning))
+				break;
+		}
+
+		//set flag
+		try {
+			oam.setSystemConfig("DistributeConfigFiles", "y");
+		}
+		catch(...) {}
+		
+		cout << endl << "   Successful Enabling of MariaDB Distrubute Config Files Feature" << endl;
+		cout << "   Requires a system shutdown and system start to make it take effect" << endl << endl;
+	}
+	break;
+
+        case 40: //	disableColumnStoreDistrubuteConfig
         {
+		string DistributeConfigFiles;
+		try {
+			oam.getSystemConfig("DistributeConfigFiles", DistributeConfigFiles);
+		}
+		catch(...) {}
+
+		if ( DistributeConfigFiles == "n" ) {
+			string warning = "MariaDB ColumnStore Distribute Config Files Feature is already disabled";
+			// confirm request
+			if (confirmPrompt(warning))
+				break;
+		}
+
+		//set flag
+		try {
+			oam.setSystemConfig("DistributeConfigFiles", "n");
+		}
+		catch(...) {}
+		
+		cout << endl << "   Successful Disabling of MariaDB Distrubute Config Files Feature" << endl;
+		cout << "   Requires a system shutdown and system start to make it take effect" << endl;
+		cout << "   This also means that it is assumed that the User has setup an External" << endl;
+		cout << "   Management Application that will perform the Configuration file updates" << endl << endl;
         }
         break;
 
@@ -5122,6 +5166,7 @@ int processCommand(string* arguments)
 				oam.getSystemConfig("DataRedundancyCopies", DataRedundancyCopies);
 				oam.getSystemConfig("DataRedundancyNetworkType", DataRedundancyNetworkType);
 				oam.getSystemConfig("DataRedundancyStorageType", DataRedundancyStorageType);
+				oam.getSystemConfig("DistributedInstall", DistributedInstall);
 			}
 			catch(...) {}
 
@@ -8289,7 +8334,35 @@ void printSystemStatus()
 		catch(...) {}
 
 		if ( MySQLRep == "y" )
-			cout << "MariaDB ColumnStore Replication Feature is enabled" << endl << endl;
+			cout << "MariaDB ColumnStore Replication Feature is enabled" << endl;
+		else
+			cout << "MariaDB ColumnStore Replication Feature is disabled" << endl;
+		  
+		//display Distrubute Install and Config Features
+		string DistributedInstall;
+		try {
+			oam.getSystemConfig("DistributedInstall", DistributedInstall);
+		}
+		catch(...) {}
+
+		if ( DistributedInstall == "y" )
+			cout << "MariaDB ColumnStore Distrubuted Install Feature is enabled" << endl;
+		else
+			cout << "MariaDB ColumnStore Distrubuted Install Feature is disabled" << endl;
+		  
+		string DistributeConfigFiles;
+		try {
+			oam.getSystemConfig("DistributeConfigFiles", DistributeConfigFiles);
+		}
+		catch(...) {}
+
+		if ( DistributedInstall == "y" )
+			cout << "MariaDB ColumnStore Distrubuted Configuration Files Feature is enabled" << endl;
+		else
+			cout << "MariaDB ColumnStore Distrubuted Configuration Files Feature is disabled" << endl;
+		
+		cout << endl;
+		
 	}
 	catch (exception& e)
 	{

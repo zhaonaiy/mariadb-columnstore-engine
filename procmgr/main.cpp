@@ -185,6 +185,15 @@ int main(int argc, char **argv)
 		MySQLRep = "n";
 	}
 
+	try
+        {
+		oam.getSystemConfig("DistributeConfigFiles", DistributeConfigFiles);
+        }
+        catch (...) 
+	{
+                log.writeLog(__LINE__, "getSystemConfig Error: DistributeConfigFiles", LOG_TYPE_ERROR);
+	}
+
 	// get system uptime and alarm if this is a restart after module outage
 	if ( gOAMParentModuleFlag ) {
 		log.writeLog(__LINE__, "Running Active");
@@ -560,7 +569,7 @@ static void startMgrProcessThread()
         }
         catch (...) 
 	{
-                log.writeLog(__LINE__, "addModule - ERROR: get DistributedInstall", LOG_TYPE_ERROR);
+                log.writeLog(__LINE__, "getSystemConfig Error: DistributedInstall", LOG_TYPE_ERROR);
 	}
 
 	//Send out a start service just to make sure Columnstore is runing on remote nodes

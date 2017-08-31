@@ -55,6 +55,7 @@ extern bool HDFS;
 extern string localHostName;
 extern string PMwithUM;
 extern string AmazonPMFailover;
+extern string DistributeConfigFiles;
 
 typedef   map<string, int>	moduleList;
 extern moduleList moduleInfoList;
@@ -8203,6 +8204,9 @@ int ProcessManager::distributeConfigFile(std::string name, std::string file)
 	ByteStream::byte requestID = UPDATECONFIGFILE;
 	Oam oam;
 	int returnStatus = oam::API_SUCCESS;
+
+	if ( DistributeConfigFiles == "n" )
+	      return returnStatus;
 
 	log.writeLog(__LINE__, "distributeConfigFile called for " + name + " file = " + file, LOG_TYPE_DEBUG);
 

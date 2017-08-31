@@ -4843,11 +4843,16 @@ namespace oam
 		if ( name == "system" )
 			ackflag = oam::ACK_NO;
 
-        // build and send msg
+		Config* sysConfig = Config::makeConfig(CalpontConfigFile.c_str());
+		string DistributeConfigFiles = sysConfig->getConfig("Installation", "DistributeConfigFiles");
+		if ( DistributeConfigFiles == "n" )
+		      return;
+		
+		// build and send msg
 		int returnStatus = sendMsgToProcMgr(DISTRIBUTECONFIG, name, oam::FORCEFUL, ackflag, file, "", 30);
 
-        if (returnStatus != API_SUCCESS)
-            exceptionControl("distributeConfigFile", returnStatus);
+		if (returnStatus != API_SUCCESS)
+		    exceptionControl("distributeConfigFile", returnStatus);
 
 		return;
 	}
