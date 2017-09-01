@@ -640,7 +640,7 @@ int main(int argc, char *argv[])
 	    catch(...)
 	    {}
 	    
-	    if ( nonDistributeConfig == "n" )
+	    if ( DistributedInstall == "n" )
 		nonDistributeConfig = true;
 	}
 
@@ -1101,18 +1101,35 @@ int main(int argc, char *argv[])
 		// setup to start on reboot
 		system("sudo sed -i -e s/#runuser/runuser/g /etc/rc.local >/dev/null 2>&1");
 	}
-	
-	if ( pmwithum )
-		cout << endl << "NOTE: Local Query Feature is enabled" << endl;
 
+	cout << endl << "===== ColumnStore Features =====" << endl << endl;
+
+	if( IserverTypeInstall != oam::INSTALL_COMBINE_DM_UM_PM ) 
+	{
+		if ( pmwithum )
+			cout << "Local Query Feature is enabled" << endl;
+		else
+			cout << "Local Query Feature is disabled" << endl;
+	}
+	  
 	if ( mysqlRep )
-		cout << endl << "NOTE: MariaDB ColumnStore Replication Feature is enabled" << endl;
+		cout << "MariaDB ColumnStore Replication Feature is enabled" << endl;
+	else
+	  	cout << "MariaDB ColumnStore Replication Feature is disabled" << endl;
 
 	if ( nonDistributeInstall )
-		cout << endl << "NOTE: MariaDB ColumnStore Non-Distributed Install Feature is enabled" << endl;
+		cout << "MariaDB ColumnStore Distributed Install Feature is disabled" << endl;
+	else
+	  	cout << "MariaDB ColumnStore Distributed Install Feature is enabled" << endl;
 
+	  
 	if ( nonDistributeConfig )
-		cout << endl << "NOTE: MariaDB ColumnStore Non-Distributed Configuration Feature is enabled" << endl;
+		cout << "MariaDB ColumnStore Distributed Configuration Feature is disabled" << endl;
+	else
+	  	cout << "MariaDB ColumnStore Distributed Configuration Feature is enabled" << endl;
+
+	if (amazonInstall)
+	  	cout << "MariaDB ColumnStore Amazon EC2-API Install Feature is enabled" << endl;
 
 	//Write out Updated System Configuration File
 	try {

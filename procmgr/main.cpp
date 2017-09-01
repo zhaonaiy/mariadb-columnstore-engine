@@ -59,6 +59,7 @@ string localHostName;
 string PMwithUM = "n";
 string MySQLRep = "n";
 string DBRootStorageType = "internal";
+string DistributeConfigFiles = "y";
 
 // pushing the ACTIVE_ALARMS_FILE to all nodes every 10 seconds.
 const int ACTIVE_ALARMS_PUSHING_INTERVAL = 10;

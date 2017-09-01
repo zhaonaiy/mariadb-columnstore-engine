@@ -260,14 +260,16 @@
 		<Arg3>Optional: Module-name and Parameter-name will display the Module Name Configuration parameter</Arg3>
 	</Cmd38>
 	<Cmd39>
-		<Name>enableColumnStoreDistrubuteConfig</Name>
-		<Desc1>Enable ColumnStore Distributation of Config files functionality on the system</Desc1>
+		<Name>enableDistributeConfig</Name>
+		<Desc1>Enable ColumnStore Distribution of Config files functionality on the system</Desc1>
+		<Desc2>Enabling this feature means that the ColumnStore Process Management will distribute</Desc2>
+		<Desc3>the ColumnStore Config Files to the non-Active Parent nodes.</Desc3>
 	</Cmd39>
 	<Cmd40>
-		<Name>disableColumnStoreDistrubuteConfig</Name>
-		<Desc1>Disable ColumnStore Distributation of Config files functionality on the system</Desc1>
-		<Desc2>Meaning this functionality of update Config FIle changes within the system is being done</Desc2>
-		<Desc3>by an external Management Application</Desc3>
+		<Name>disableDistributeConfig</Name>
+		<Desc1>Disable ColumnStore Distribution of Config files functionality on the system</Desc1>
+		<Desc2>Disabling this feature means that an external Management Application will distribute</Desc2>
+		<Desc3>the ColumnStore Config Files to the non-Active Parent nodes.</Desc3>
 	</Cmd40>
 	<Cmd41>
 		<Name>AVAILABLE</Name>

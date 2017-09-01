@@ -4463,7 +4463,7 @@ int processCommand(string* arguments)
         }
         break;
 
-       case 39:	//	enableColumnStoreDistrubuteConfig
+       case 39:	//	enableDistributeConfig
 	{
 		string DistributeConfigFiles;
 		try {
@@ -4477,6 +4477,16 @@ int processCommand(string* arguments)
 			if (confirmPrompt(warning))
 				break;
 		}
+		else
+		{
+			cout << endl << "MariaDB ColumnStore Distribute Config Files Feature is currently disabled" << endl;
+			cout << "Enabling this feature means that the ColumnStore Applications will distribute" << endl;
+			cout << "the configuration files" << endl;
+			string warning = "This will require a system shutdown and start to take effect";
+			// confirm request
+			if (confirmPrompt(warning))
+				break;
+		}
 
 		//set flag
 		try {
@@ -4484,12 +4494,12 @@ int processCommand(string* arguments)
 		}
 		catch(...) {}
 		
-		cout << endl << "   Successful Enabling of MariaDB Distrubute Config Files Feature" << endl;
-		cout << "   Requires a system shutdown and system start to make it take effect" << endl << endl;
+		cout << endl << "   Successful Enabling of MariaDB Distributebute Config Files Feature" << endl;
+		cout << "   A system shutdown and system start to make it take effect" << endl << endl;
 	}
 	break;
 
-        case 40: //	disableColumnStoreDistrubuteConfig
+        case 40: //	disableDistributeConfig
         {
 		string DistributeConfigFiles;
 		try {
@@ -4503,6 +4513,15 @@ int processCommand(string* arguments)
 			if (confirmPrompt(warning))
 				break;
 		}
+		{
+			cout << endl << "MariaDB ColumnStore Distribute Config Files Feature is currently enabled" << endl;
+			cout << "Disabling this feature means that an External Management Application will distribute" << endl;
+			cout << "the configuration files" << endl;
+			string warning = "This will require a system shitdown and start to take effect";
+			// confirm request
+			if (confirmPrompt(warning))
+				break;
+		}
 
 		//set flag
 		try {
@@ -4510,10 +4529,8 @@ int processCommand(string* arguments)
 		}
 		catch(...) {}
 		
-		cout << endl << "   Successful Disabling of MariaDB Distrubute Config Files Feature" << endl;
-		cout << "   Requires a system shutdown and system start to make it take effect" << endl;
-		cout << "   This also means that it is assumed that the User has setup an External" << endl;
-		cout << "   Management Application that will perform the Configuration file updates" << endl << endl;
+		cout << endl << "   Successful Disabling of MariaDB Distribute Config Files Feature" << endl;
+		cout << "   A system shutdown and system start to make it take effect" << endl << endl;
         }
         break;
 
@@ -5202,7 +5219,7 @@ int processCommand(string* arguments)
 				moduleCount = atoi(arguments[2].c_str());
 				hostArg = 3;
 
-				//check for a non-distrubuted install setup, dont need password
+				//check for a non-distributed install setup, dont need password
 				if ( DistributedInstall == "y" )
 				{
 				    if (arguments[4] != "")
@@ -5233,7 +5250,7 @@ int processCommand(string* arguments)
 				moduleCount = 1;
 				hostArg = 2;
 
-				//check for a non-distrubuted install setup, dont need password
+				//check for a non-distributed install setup, dont need password
 				if ( DistributedInstall == "y" )
 				{
 				    if (arguments[3] != "")
@@ -8338,7 +8355,7 @@ void printSystemStatus()
 		else
 			cout << "MariaDB ColumnStore Replication Feature is disabled" << endl;
 		  
-		//display Distrubute Install and Config Features
+		//display Distribute Install and Config Features
 		string DistributedInstall;
 		try {
 			oam.getSystemConfig("DistributedInstall", DistributedInstall);
@@ -8346,9 +8363,9 @@ void printSystemStatus()
 		catch(...) {}
 
 		if ( DistributedInstall == "y" )
-			cout << "MariaDB ColumnStore Distrubuted Install Feature is enabled" << endl;
+			cout << "MariaDB ColumnStore Distributed Install Feature is enabled" << endl;
 		else
-			cout << "MariaDB ColumnStore Distrubuted Install Feature is disabled" << endl;
+			cout << "MariaDB ColumnStore Distributed Install Feature is disabled" << endl;
 		  
 		string DistributeConfigFiles;
 		try {
@@ -8357,9 +8374,9 @@ void printSystemStatus()
 		catch(...) {}
 
 		if ( DistributedInstall == "y" )
-			cout << "MariaDB ColumnStore Distrubuted Configuration Files Feature is enabled" << endl;
+			cout << "MariaDB ColumnStore Distributed Configuration Files Feature is enabled" << endl;
 		else
-			cout << "MariaDB ColumnStore Distrubuted Configuration Files Feature is disabled" << endl;
+			cout << "MariaDB ColumnStore Distributed Configuration Files Feature is disabled" << endl;
 		
 		cout << endl;
 		
