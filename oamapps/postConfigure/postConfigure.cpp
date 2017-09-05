@@ -1102,7 +1102,10 @@ int main(int argc, char *argv[])
 		system("sudo sed -i -e s/#runuser/runuser/g /etc/rc.local >/dev/null 2>&1");
 	}
 
-	cout << endl << "===== ColumnStore Features =====" << endl << endl;
+	// prompt for system name
+	setSystemName();
+
+	cout << endl << "===== MariaDB ColumnStore Features =====" << endl << endl;
 
 	if( IserverTypeInstall != oam::INSTALL_COMBINE_DM_UM_PM ) 
 	{
@@ -1113,23 +1116,23 @@ int main(int argc, char *argv[])
 	}
 	  
 	if ( mysqlRep )
-		cout << "MariaDB ColumnStore Replication Feature is enabled" << endl;
+		cout << "Schema Sync Feature is enabled" << endl;
 	else
-	  	cout << "MariaDB ColumnStore Replication Feature is disabled" << endl;
+	  	cout << "Schema Sync Feature is disabled" << endl;
 
 	if ( nonDistributeInstall )
-		cout << "MariaDB ColumnStore Distributed Install Feature is disabled" << endl;
+		cout << "Distributed Install Feature is disabled" << endl;
 	else
-	  	cout << "MariaDB ColumnStore Distributed Install Feature is enabled" << endl;
+	  	cout << "Distributed Install Feature is enabled" << endl;
 
 	  
 	if ( nonDistributeConfig )
-		cout << "MariaDB ColumnStore Distributed Configuration Feature is disabled" << endl;
+		cout << "Distributed Configuration Feature is disabled" << endl;
 	else
-	  	cout << "MariaDB ColumnStore Distributed Configuration Feature is enabled" << endl;
+	  	cout << "Distributed Configuration Feature is enabled" << endl;
 
 	if (amazonInstall)
-	  	cout << "MariaDB ColumnStore Amazon EC2-API Install Feature is enabled" << endl;
+	  	cout << "Amazon EC2-API Install Feature is enabled" << endl;
 
 	//Write out Updated System Configuration File
 	try {
@@ -1145,13 +1148,6 @@ int main(int argc, char *argv[])
 		cout << "ERROR: Failed trying to update MariaDB ColumnStore System Configuration file" << endl; 
 		exit(1);
 	}
-
-	cout << endl;
-
-	// prompt for system name
-	setSystemName();
-
-	cout << endl;
 
 	oamModuleInfo_t t;
 	string localModuleName;
