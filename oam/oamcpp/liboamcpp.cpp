@@ -315,7 +315,7 @@ namespace oam
 
 				int moduleFound = 0;
 				//get NIC IP address/hostnames
-				for (int moduleID = 1; moduleID <= moduletypeconfig.ModuleCount ; moduleID++)
+				for (int moduleID = 1; ; moduleID++)
 				{
 					DeviceNetworkConfig devicenetworkconfig;
 					HostConfig hostconfig;
@@ -326,8 +326,8 @@ namespace oam
 	
 						string ipAddr = sysConfig->getConfig(Section, ModuleIpAddr);
 						if (ipAddr.empty())
-                            break;
-                        else if (ipAddr == UnassignedIpAddr )
+						    break;
+						else if (ipAddr == UnassignedIpAddr )
 							continue;
 	
 						string ModuleHostName = MODULE_SERVER_NAME + itoa(moduleID) + "-" + itoa(nicID) + "-" + itoa(moduleTypeID);
@@ -341,7 +341,7 @@ namespace oam
 					}
 
 					if ( !devicenetworkconfig.hostConfigList.empty() ) {
-		                string ModuleDisableState = MODULE_DISABLE_STATE + itoa(moduleID) + "-" + itoa(moduleTypeID);
+						string ModuleDisableState = MODULE_DISABLE_STATE + itoa(moduleID) + "-" + itoa(moduleTypeID);
 						devicenetworkconfig.DisableState = sysConfig->getConfig(Section, ModuleDisableState);
 
 						devicenetworkconfig.DeviceName = moduletypeconfig.ModuleType + itoa(moduleID);
@@ -370,7 +370,7 @@ namespace oam
 
 				// get dbroot IDs
 				moduleFound = 0;
-				for (int moduleID = 1; moduleID <= moduletypeconfig.ModuleCount ; moduleID++)
+				for (int moduleID = 1;  ; moduleID++)
 				{
 					string ModuleDBRootCount = MODULE_DBROOT_COUNT + itoa(moduleID) + "-" + itoa(moduleTypeID);
 					string temp = sysConfig->getConfig(Section, ModuleDBRootCount).c_str();
