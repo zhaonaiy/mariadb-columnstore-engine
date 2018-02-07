@@ -53,12 +53,15 @@ mcsv1_UDAF::ReturnCode allnull::reset(mcsv1Context* context)
 mcsv1_UDAF::ReturnCode allnull::nextValue(mcsv1Context* context, 
 										  std::vector<ColumnDatum>& valsIn)
 {
+    // We don't test valsIn for NULL; Rather NULLnes is reflected in context's
+    // dataFlags. The isParamNull() method of context checks the NULLness of 
+    // each parameter for this row.
 	struct allnull_data* data = (struct allnull_data*)context->getUserData()->data;
 	
 	for (size_t i = 0; i < context->getParameterCount(); i++)
 	{
 		data->totalQuantity++;
-		if (context->isParamNull(0))
+		if (context->isParamNull(i))
 		{
 			data->totalNulls++;
 		}

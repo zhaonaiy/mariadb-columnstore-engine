@@ -277,6 +277,7 @@ const JobStepVector doProject(const RetColsVector& retCols, JobInfo& jobInfo)
 	{
 		const SimpleColumn* sc = dynamic_cast<const SimpleColumn*>(retCols[i].get());
 		const WindowFunctionColumn* wc = NULL;
+        const RowColumn* rowCol = NULL;
 		if (sc != NULL)
 		{
 			projectSimpleColumn(sc, jsv, jobInfo);
@@ -289,6 +290,12 @@ const JobStepVector doProject(const RetColsVector& retCols, JobInfo& jobInfo)
 			TupleInfo ti(setExpTupleInfo(ct, eid, retCols[i].get()->alias(), jobInfo));
 			jobInfo.pjColList.push_back(ti);
 		}
+        else if ((rowCol = dynamic_cast<const RowColumn*>(retCols[i].get())) != NULL)
+        {
+            // MCOL-1201 - add multi-parameter support to UDAnF
+            // Lets try ignoring it. The parameters have already individually 
+            // been pushed into retCols and will be handled as the loop runs.
+        }
 		else
 		{
 			const ArithmeticColumn* ac = NULL;
@@ -846,6 +853,33 @@ const JobStepVector doAggProject(const CalpontSelectExecutionPlan* csep, JobInfo
 			continue;
 		}
 
+        // MCOL-1201 Add support for multi-parameter UDAnF
+		UDAFColumn* udafc = dynamic_cast<UDAFColumn*>(retCols[i].get());
+		if (udafc != NULL)
+		{
+			srcp = udafc->functionParms();
+			const RowColumn* rcp = dynamic_cast<const RowColumn*>(srcp.get());
+
+			const vector<SRCP>& cols = rcp->columnVec();
+			for (vector<SRCP>::const_iterator j = cols.begin(); j != cols.end(); j++)
+			{
+                srcp = *j;
+				if (dynamic_cast<const ConstantColumn*>(srcp.get()) == NULL)
+					retCols.push_back(srcp);
+
+                // Do we need this?
+        		const ArithmeticColumn* ac = dynamic_cast<const ArithmeticColumn*>(srcp.get());
+        		const FunctionColumn* fc = dynamic_cast<const FunctionColumn*>(srcp.get());
+        		if (ac != NULL || fc != NULL)
+        		{
+        			// bug 3728, make a dummy expression step for each expression.
+        			scoped_ptr<ExpressionStep> es(new ExpressionStep(jobInfo));
+        			es->expression(srcp, jobInfo);
+        		}
+			}
+			continue;
+		}
+
 		srcp = retCols[i];
 		const AggregateColumn* ag = dynamic_cast<const AggregateColumn*>(retCols[i].get());
 		if (ag != NULL)
@@ -1000,6 +1034,7 @@ const JobStepVector doAggProject(const CalpontSelectExecutionPlan* csep, JobInfo
 		{
 			const ArithmeticColumn* ac = NULL;
 			const FunctionColumn* fc = NULL;
+            const RowColumn* rowCol = NULL;
 			const WindowFunctionColumn* wc = NULL;
 			bool hasAggCols = false;
 			if ((ac = dynamic_cast<const ArithmeticColumn*>(srcp.get())) != NULL)
@@ -1012,6 +1047,24 @@ const JobStepVector doAggProject(const CalpontSelectExecutionPlan* csep, JobInfo
 				if (fc->aggColumnList().size() > 0)
 					hasAggCols = true;
 			}
+            // MCOL-1201 Add support for multi-parameter UDAnF
+    		else if ((rowCol = dynamic_cast<const RowColumn*>(srcp.get())) != NULL)
+    		{
+                const std::vector<SRCP>& cols = rowCol->columnVec();
+                for (vector<SRCP>::const_iterator j = cols.begin(); j != cols.end(); j++)
+                {
+                    if ((ac = dynamic_cast<const ArithmeticColumn*>((*j).get())) != NULL)
+                    {
+                        if (ac->aggColumnList().size() > 0)
+                            hasAggCols = true;
+                    }
+                    else if ((fc = dynamic_cast<const FunctionColumn*>((*j).get())) != NULL)
+                    {
+                        if (fc->aggColumnList().size() > 0)
+                            hasAggCols = true;
+                    }
+                }
+            }
 			else if (dynamic_cast<const AggregateColumn*>(srcp.get()) != NULL)
 			{
 				std::ostringstream errmsg;

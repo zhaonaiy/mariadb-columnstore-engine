@@ -3526,6 +3526,11 @@ ParseTree* buildParseTree(Item_func* item, gp_walk_info& gwi, bool& nonSupport)
 
 ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 {
+    // MCOL-1201 For UDAnF multiple parameters
+    RowColumn* rowCol = NULL; 
+	vector<SRCP> selCols;
+	vector<SRCP> orderCols;
+
 	if (!(gwi.thd->infinidb_vtable.cal_conn_info))
 		gwi.thd->infinidb_vtable.cal_conn_info = (void*)(new cal_connection_info());
 	cal_connection_info* ci = reinterpret_cast<cal_connection_info*>(gwi.thd->infinidb_vtable.cal_conn_info);
@@ -3577,9 +3582,7 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 	if (isp->sum_func() == Item_sum::GROUP_CONCAT_FUNC)
 	{
 		Item_func_group_concat *gc = (Item_func_group_concat*)isp;
-		vector<SRCP> orderCols;
-		RowColumn *rowCol = new RowColumn();
-		vector<SRCP> selCols;
+		rowCol = new RowColumn();
 
 		uint32_t select_ctn = gc->count_field();
 		ReturnedColumn *rc = NULL;
@@ -3635,6 +3638,10 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 	{
 		for (uint32_t i = 0; i < isp->argument_count(); i++)
 		{
+            if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+            {
+                rowCol = new RowColumn();
+            }
 			Item* sfitemp = sfitempp[i];
 			Item::Type sfitype = sfitemp->type();
 			switch (sfitype)
@@ -3649,7 +3656,12 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 						break;
 					}
 
-					parm.reset(sc);
+				    parm.reset(sc);
+                    if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+                    {
+			            selCols.push_back(parm);                    
+                    }
+
 					gwi.columnMap.insert(CalpontSelectExecutionPlan::ColumnMap::value_type(string(ifp->field_name), parm));
 					TABLE_LIST* tmp = (ifp->cached_table ? ifp->cached_table : 0);
 					gwi.tableMap[make_aliastable(sc->schemaName(), sc->tableName(), sc->tableAlias(), sc->isInfiniDB())] = make_pair(1, tmp);
@@ -3671,6 +3683,10 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 				{
 					//ac->aggOp(AggregateColumn::COUNT);
 					parm.reset(new ConstantColumn("", ConstantColumn::NULLDATA));
+                    if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+                    {
+			            selCols.push_back(parm);                    
+                    }
 					//ac->functionParms(parm);
 					ac->constCol(SRCP(buildReturnedColumn(sfitemp, gwi, gwi.fatalParseError)));
 					break;
@@ -3720,6 +3736,10 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 						rc = buildFunctionColumn(ifp, gwi, gwi.fatalParseError);
 
 					parm.reset(rc);
+                    if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+                    {
+			            selCols.push_back(parm);                    
+                    }
 					gwi.clauseType = clauseType;
 					if (gwi.fatalParseError)
 						break;
@@ -3733,6 +3753,10 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 					if (rc)
 					{
 						parm.reset(rc);
+                        if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+                        {
+    			            selCols.push_back(parm);                    
+                        }
 						//ac->functionParms(parm);
 						break;
 					}
@@ -3758,6 +3782,13 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 			}
 		}
 	}
+
+    if (isp->sum_func() == Item_sum::UDF_SUM_FUNC)
+    {
+        rowCol->columnVec(selCols);
+		ac->functionParms(SRCP(rowCol));
+        parm.reset();
+    }
 
 	if (parm)
 	{
@@ -3940,8 +3971,13 @@ ReturnedColumn* buildAggregateColumn(Item* item, gp_walk_info& gwi)
 			COL_TYPES colTypes;
 			execplan::CalpontSelectExecutionPlan::ColumnMap::iterator cmIter;
 
-			// Build the column type vector. For now, there is only one
-			colTypes.push_back(make_pair(udafc->functionParms()->alias(), udafc->functionParms()->resultType().colDataType));
+			// Build the column type vector.
+            // MCOL-1201 Add support for multi-parameter UDAnF
+            for (size_t i = 0; i < rowCol->columnVec().size(); ++i)
+            {
+                SRCP parm = rowCol->columnVec()[i]; 
+    			colTypes.push_back(make_pair(parm->alias(), parm->resultType().colDataType));
+            }
 
 			// Call the user supplied init()
 			if (context.getFunction()->init(&context, colTypes) == mcsv1_UDAF::ERROR)

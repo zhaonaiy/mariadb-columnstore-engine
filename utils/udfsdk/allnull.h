@@ -38,7 +38,7 @@
  * 6. restart the Columnstore system. 
  * 7. notify mysqld about the new functions with commands like:
  *  
- *    CREATE AGGREGATE FUNCTION allnull returns BOOL soname
+ *    CREATE AGGREGATE FUNCTION allnull returns INTEGER soname
  *    'libudf_mysql.so';
  *  
  */
